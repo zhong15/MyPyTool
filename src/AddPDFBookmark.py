@@ -1,4 +1,3 @@
-from os import stat
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import logging
 import logging.config
