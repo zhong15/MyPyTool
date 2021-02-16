@@ -1,5 +1,11 @@
 from os import stat
 from PyPDF2 import PdfFileWriter, PdfFileReader
+import logging
+import logging.config
+
+logging.config.fileConfig("resources/logger.config")
+
+LOG = logging.getLogger('log02')
 
 
 class BookmarkParser:
@@ -31,8 +37,10 @@ class BookmarkParser:
         Returns:
             3 个元素组成的元组列表：（级别，标题，页码）
         """
+        LOG.info('开始解析书签')
         bm_list = self.__read_bookmark_as_list()
         if bm_list is None or len(bm_list) == 0:
+            LOG.warn('书签内容为空'.format(self.__path))
             return None
 
         bml = []
@@ -59,6 +67,7 @@ class BookmarkParser:
         Returns:
             书签字符串列表
         """
+        LOG.debug('开始读取书签文件')
         bm_list = []
         with open(self.__path) as bm:
             for i in bm:
@@ -85,6 +94,7 @@ class BookmarkParser:
 
         留空行或一个整数
         """
+        LOG.debug('开始解析实际页码的递增基数')
         if str is None or len(str) == 0:
             return 0
 
@@ -104,6 +114,7 @@ class BookmarkParser:
         """
         # bookmark = {layer}{title}{first space}{page no}
         if str is None or len(str) == 0:
+            LOG.warn('跳过解析空行')
             return
 
         i = 0
@@ -232,6 +243,7 @@ class BookmarkParser:
 
     @staticmethod
     def __add_id_parent_id(bookmark_list):
+        LOG.debug('开始建立元组 ID 关系')
         if bookmark_list is None or len(bookmark_list) == 0:
             return None
         bml = []
@@ -251,6 +263,7 @@ class BookmarkParser:
 
     @staticmethod
     def __add_serial_no_to_title(bookmark_list):
+        LOG.debug('开始设置书签章节标题')
         if bookmark_list is None or len(bookmark_list) == 0:
             return None
         bm_list = []
@@ -286,28 +299,44 @@ class BookmarkParser:
 
 
 def __main_core():
-    parser = BookmarkParser('resources/bookmark.txt')
-    bm_list = parser.parse()
+    LOG.info('开始添加书签')
+    try:
+        parser = BookmarkParser('resources/bookmark.txt')
+        bm_list = parser.parse()
+    except Exception as e:
+        LOG.error('解析书签错误：{}'.format(e))
+        return
 
-    with open('resources/input.pdf', 'rb') as i:
-        input = PdfFileReader(i)
-        output = PdfFileWriter()
-        print('page total: {}'.format(input.numPages))
-        for i in range(0, input.numPages):
-            output.addPage(input.getPage(i))
+    LOG.info('开始读取 PDF 文件')
+    try:
+        with open('resources/input.pdf', 'rb') as i:
+            input = PdfFileReader(i)
+            LOG.debug('PDF 总页数：{}'.format(input.numPages))
 
-        # id -> bookmark object
-        bm_dict = {}
-        if bm_list is not None and len(bm_list) > 0:
-            for bm in bm_list:
-                (id, parent_id, layer, title, page_no) = bm
-                parent = None
-                if parent_id is not None:
-                    parent = bm_dict[parent_id]
-                bookmark = output.addBookmark(title, page_no, parent)
-                bm_dict[id] = bookmark
-        with open('dist/output.pdf', 'wb') as o:
-            output.write(o)
+            output = PdfFileWriter()
+            LOG.info('开始复制 PDF 文件')
+            for i in range(0, input.numPages):
+                output.addPage(input.getPage(i))
+
+            LOG.info('开始添加书签到 PDF 文件')
+            # id -> bookmark object
+            bm_dict = {}
+            if bm_list is not None and len(bm_list) > 0:
+                for bm in bm_list:
+                    (id, parent_id, _, title, page_no) = bm
+                    parent = None
+                    if parent_id is not None:
+                        parent = bm_dict[parent_id]
+                    bookmark = output.addBookmark(title, page_no, parent)
+                    LOG.debug(
+                        '成功添加书签到 PDF 文件副本：{}，页码：{}'.format(title, page_no))
+                    bm_dict[id] = bookmark
+
+            LOG.info('开始写出 PDF 文件')
+            with open('dist/output.pdf', 'wb') as o:
+                output.write(o)
+    except Exception as e:
+        LOG.error('添加书签错误：{}'.format(e))
 
 
 if __name__ == '__main__':
