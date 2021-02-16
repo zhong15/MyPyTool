@@ -1,6 +1,8 @@
-from PyPDF2 import PdfFileWriter, PdfFileReader
+import os
 import logging
 import logging.config
+
+from PyPDF2 import PdfFileWriter, PdfFileReader
 
 logging.config.fileConfig("resources/logger.config")
 
@@ -332,10 +334,27 @@ def __main_core():
                     bm_dict[id] = bookmark
 
             LOG.info('开始写出 PDF 文件')
+            __rebuild_dist_dir_and_output_pdf()
             with open('dist/output.pdf', 'wb') as o:
                 output.write(o)
     except Exception as e:
         LOG.error('添加书签错误：{}'.format(e))
+
+
+def __rebuild_dist_dir_and_output_pdf():
+    dist = 'dist'
+    if not os.path.exists(dist):
+        os.mkdir(dist)
+    if os.path.isfile(dist):
+        os.remove(dist)
+        os.mkdir(dist)
+
+    output_pdf = dist + '/output.pdf'
+    if os.path.exists(output_pdf):
+        if os.path.isfile(output_pdf):
+            os.remove(output_pdf)
+        else:
+            os.rmdir(output_pdf)
 
 
 if __name__ == '__main__':
