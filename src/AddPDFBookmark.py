@@ -101,7 +101,7 @@ class BookmarkParser:
 
         for c in str:
             if c < '0' or c > '9':
-                BookmarkParser._raise_message('page no 不是数字')
+                self._raise_message('page no 不是数字')
 
         return int(str)
 
@@ -190,10 +190,10 @@ class BookmarkParser:
         page_no = str[s:len(str)]
         for c in page_no:
             if c < '0' or c > '9':
-                BookmarkParser._raise_message('page no 不是数字')
+                self._raise_message('page no 不是数字')
         page_no = int(page_no)
         if page_no < 1:
-            BookmarkParser._raise_message(
+            self._raise_message(
                 'page no 错误，page no: {}'.format(page_no))
         return (len(str), page_no + self.__page_no_base)
 
