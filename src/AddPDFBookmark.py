@@ -70,7 +70,7 @@ class BookmarkParser:
         """
         LOG.debug('开始读取书签文件')
         bm_list = []
-        with open(self.__path) as bm:
+        with open(file=self.__path, encoding='UTF-8') as bm:
             for i in bm:
                 bm_list.append(i)
         return bm_list
