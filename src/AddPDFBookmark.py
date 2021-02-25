@@ -273,8 +273,11 @@ class BookmarkParser:
             (id, parent_id, layer, title, page_no) = bm
             serial_no_dict = BookmarkParser.__incremental_serial_no(
                 serial_no_dict, layer)
-            title = BookmarkParser.__get_serial_no_string(
-                serial_no_dict, layer) + ' ' + title
+            if title.startswith('@'):
+                title = title[1:]
+            else:
+                title = BookmarkParser.__get_serial_no_string(
+                    serial_no_dict, layer) + ' ' + title
             bm_list.append((id, parent_id, layer, title, page_no))
         return bm_list
 
